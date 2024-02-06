@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Search</title>
+    <style>
+      
+      body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f4f4f4;
+}
+
+.container {
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+}
+
+input {
+    padding: 8px;
+    margin: 10px;
+}
+
+button {
+    padding: 8px 16px;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#results {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.recipe-container {
+    width: 300px;
+    margin: 10px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-container img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px 10px 0 0;
+}
+
+.recipe-container .recipe-details {
+    margin-top: 10px;
+}
+
+.recipe-container h3 {
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.recipe-container p {
+    margin: 0;
+    color: #777;
+}
+
+.recipe-container button {
+    background-color: #ff0000;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* Popup styles */
+
+/* Popup styles */
+
+.popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-container {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 80%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    overflow: hidden;
+}
+
+.popup-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    color: #ff0000;
+}
+
+/* Added styles for better design */
+.popup-content {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Media queries for responsiveness */
+@media only screen and (max-width: 600px) {
+    .popup-container {
+        max-width: 90%;
+    }
+}
+
+@media only screen and (max-width: 400px) {
+    .popup-container {
+        max-width: 95%;
+    }
+}
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Recipe Search</h1>
+        <input type="text" id="searchInput" placeholder="Search for recipes">
+        <button id="searchBtn">Search</button>
+        <div id="results"></div>
+    </div>
+
+    <!-- Popup overlay and container -->
+    <div class="popup-overlay" onclick="closePopup()"></div>
+    <div class="popup-container">
+        <span class="popup-close" onclick="closePopup()">X</span>
+        <div class="popup-content"></div>
+    </div>
+
+    <script>
+      
+      document.addEventListener('DOMContentLoaded', function () {
+    const apiKey = "25ea99e1b341a2b03263e538b4cb1701";
+    const appID = "745591d6";
+    const searchInput = document.getElementById("searchInput");
+    const resultsContainer = document.getElementById("results");
+
+    document.getElementById("searchBtn").addEventListener("click", async function () {
+        const searchTerm = searchInput.value.trim();
+
+        if (searchTerm !== "") {
+            try {
+                const randomSeed = Math.floor(Math.random() * 1000);
+                const apiUrl = `https://api.edamam.com/search?q=${searchTerm}&app_id=${appID}&app_key=${apiKey}&from=0&to=100&random=true&r=${randomSeed}`;
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                resultsContainer.innerHTML = "";
+
+                if (data && data.hits) {
+                    displayResults(data);
+                } else {
+                    resultsContainer.textContent = "No results found.";
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                resultsContainer.textContent = "An error occurred while fetching data.";
+            }
+        } else {
+            resultsContainer.textContent = "Please enter a search query.";
+        }
+    });
+
+    function displayResults(data) {
+        data.hits.forEach(hit => {
+            const recipeContainer = document.createElement("div");
+            recipeContainer.classList.add("recipe-container");
+
+            // Display image
+            if (hit.recipe.image) {
+                const recipeImage = document.createElement("img");
+                recipeImage.classList.add("recipe-image");
+                recipeImage.src = hit.recipe.image;
+                recipeContainer.appendChild(recipeImage);
+            }
+
+            // Display recipe details
+            const recipeDetails = document.createElement("div");
+            recipeDetails.classList.add("recipe-details");
+
+            const recipeTitle = document.createElement("h3");
+            recipeTitle.textContent = hit.recipe.label;
+
+            const recipeCalories = document.createElement("p");
+            recipeCalories.textContent = `${hit.recipe.calories.toFixed(2)} CALORIES`;
+
+            const recipeIngredients = document.createElement("p");
+            recipeIngredients.textContent = `${hit.recipe.ingredients.length} INGREDIENTS`;
+
+            const viewRecipeButton = document.createElement("button");
+            viewRecipeButton.textContent = "View Recipe";
+
+            viewRecipeButton.addEventListener("click", function () {
+                const selectedRecipe = hit.recipe;
+                const recipeDetails = `
+                    <h3>${selectedRecipe.label}</h3>
+                    <p>${selectedRecipe.calories.toFixed(2)} CALORIES</p>
+                    <p>${selectedRecipe.ingredients.length} INGREDIENTS</p>
+                    <img src="${selectedRecipe.image}" alt="${selectedRecipe.label}">
+                    <p>Ingredients:</p>
+                    <ul>
+                        ${selectedRecipe.ingredients.map(ingredient => `<li>${ingredient.text}</li>`).join('')}
+                    </ul>
+                    <p><a href="${selectedRecipe.url}" target="_blank">View Recipe</a></p>
+                `;
+                openPopup(recipeDetails);
+            });
+
+            recipeDetails.appendChild(recipeTitle);
+            recipeDetails.appendChild(recipeCalories);
+            recipeDetails.appendChild(recipeIngredients);
+            recipeDetails.appendChild(viewRecipeButton);
+
+            recipeContainer.appendChild(recipeDetails);
+            resultsContainer.appendChild(recipeContainer);
+        });
+    }
+
+    function openPopup(recipeDetails) {
+        const popupOverlay = document.querySelector('.popup-overlay');
+        const popupContainer = document.querySelector('.popup-container');
+        const popupContent = document.querySelector('.popup-content');
+
+        // Display recipe details in the popup
+        popupContent.innerHTML = recipeDetails;
+
+        // Show the popup
+        popupOverlay.style.display = 'flex';
+        popupContainer.style.display = 'block';
+    }
+
+    function closePopup() {
+        const popupOverlay = document.querySelector('.popup-overlay');
+        const popupContainer = document.querySelector('.popup-container');
+
+        // Hide the popup
+        popupOverlay.style.display = 'none';
+        popupContainer.style.display = 'none';
+    }
+});
+
+
+    </script>
+</body>
+</html>
